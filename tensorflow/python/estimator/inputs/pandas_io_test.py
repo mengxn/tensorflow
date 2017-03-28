@@ -26,30 +26,15 @@ from tensorflow.python.platform import test
 from tensorflow.python.training import coordinator
 from tensorflow.python.training import queue_runner_impl
 
-
-def print_debug_info(module_pd, has_pandas, msg):
-  if module_pd is None:
-    print('HAS_PANDAS {} and module pd is None. Msg {}'.format(has_pandas, msg))
-  else:
-    has_data_frame = hasattr(module_pd, 'DataFrame')
-    print('HAS_PANDAS {} and hasattr(pd, "DataFrame") {}. Msg {}'.format(
-        has_pandas, has_data_frame, msg))
-    if not has_data_frame:
-      print('symbols in pd {}'.format(dir(module_pd)))
-
-
 try:
   # pylint: disable=g-import-not-at-top
   import pandas as pd
   HAS_PANDAS = True
-  print_debug_info(pd, HAS_PANDAS, 'import statement')
 except IOError:
   # Pandas writes a temporary file during import. If it fails, don't use pandas.
   HAS_PANDAS = False
-  print_debug_info(None, HAS_PANDAS, 'import statement')
 except ImportError:
   HAS_PANDAS = False
-  print_debug_info(None, HAS_PANDAS, 'import statement')
 
 
 class PandasIoTest(test.TestCase):
@@ -58,7 +43,6 @@ class PandasIoTest(test.TestCase):
     index = np.arange(100, 104)
     a = np.arange(4)
     b = np.arange(32, 36)
-    print_debug_info(pd, HAS_PANDAS, 'in test case')
     x = pd.DataFrame({'a': a, 'b': b}, index=index)
     y = pd.Series(np.arange(-32, -28), index=index)
     return x, y
@@ -80,6 +64,16 @@ class PandasIoTest(test.TestCase):
     with self.assertRaises(ValueError):
       pandas_io.pandas_input_fn(
           x, y_noindex, batch_size=2, shuffle=False, num_epochs=1)
+
+  def testPandasInputFn_NonBoolShuffle(self):
+    if not HAS_PANDAS:
+      return
+    x, _ = self.makeTestDataFrame()
+    y_noindex = pd.Series(np.arange(-32, -28))
+    with self.assertRaisesRegexp(TypeError,
+                                 'shuffle must be explicitly set as boolean'):
+      # Default shuffle is None
+      pandas_io.pandas_input_fn(x, y_noindex)
 
   def testPandasInputFn_ProducesExpectedOutputs(self):
     if not HAS_PANDAS:

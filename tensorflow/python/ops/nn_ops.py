@@ -64,8 +64,8 @@ def _non_atrous_convolution(input, filter, padding, data_format=None,  # pylint:
       the `input` and output is the last dimension (default, or if `data_format`
       does not start with "NC"), or the second dimension (if `data_format`
       starts with "NC").  For N=1, the valid values are "NWC" (default) and
-      "NCW".  For N=2, the valid values are "NHWC" (default) and "NCHW".  For
-      N=3, the valid value is "NDHWC".
+      "NCW".  For N=2, the valid values are "NHWC" (default) and "NCHW".
+      For N=3, the valid values are "NDHWC" (default) and "NCDHW".
     strides: Sequence of N positive integers, defaults to `[1] * N`.
     name: Name prefix to use.
 
@@ -130,13 +130,17 @@ def _non_atrous_convolution(input, filter, padding, data_format=None,  # pylint:
     elif conv_dims == 3:
       if data_format is None or data_format == "NDHWC":
         strides = [1] + list(strides) + [1]
+      elif data_format == "NCDHW":
+        strides = [1, 1] + list(strides)
       else:
-        raise ValueError("data_format must be \"NDHWC\".")
+        raise ValueError("data_format must be \"NDHWC\" or \"NCDHW\". Have: %s"
+                         % data_format)
       return gen_nn_ops.conv3d(
           input=input,
           filter=filter,
           strides=strides,
           padding=padding,
+          data_format=data_format,
           name=name)
 
 
@@ -270,11 +274,12 @@ def with_space_to_batch(
       the `input` and output is the last dimension (default, or if `data_format`
       does not start with "NC"), or the second dimension (if `data_format`
       starts with "NC").  For N=1, the valid values are "NWC" (default) and
-      "NCW".  For N=2, the valid values are "NHWC" (default) and "NCHW".  For
-      N=3, the valid value is "NDHWC".
+      "NCW".  For N=2, the valid values are "NHWC" (default) and "NCHW".
+      For N=3, the valid values are "NDHWC" (default) and "NCDHW".
 
   Returns:
-    The output Tensor as described above.
+    The output Tensor as described above, dimensions will vary based on the op
+    provided.
 
   Raises:
     ValueError: if `padding` is invalid or the arguments are incompatible.
@@ -525,17 +530,16 @@ def convolution(input, filter,  # pylint: disable=redefined-builtin
   of N `strides` (defaulting [1]*N), this computes for each N-D spatial output
   position (x[0], ..., x[N-1]):
 
+  ```
     output[b, x[0], ..., x[N-1], k] =
-
         sum_{z[0], ..., z[N-1], q}
-
             filter[z[0], ..., z[N-1], q, k] *
             padded_input[b,
                          x[0]*strides[0] + dilation_rate[0]*z[0],
                          ...,
                          x[N-1]*strides[N-1] + dilation_rate[N-1]*z[N-1],
                          q]
-
+  ```
   where `padded_input` is obtained by zero padding the input using an effective
   spatial filter shape of `(spatial_filter_shape-1) * dilation_rate + 1` and
   output striding `strides` as described in the
@@ -576,8 +580,8 @@ def convolution(input, filter,  # pylint: disable=redefined-builtin
       the `input` and output is the last dimension (default, or if `data_format`
       does not start with "NC"), or the second dimension (if `data_format`
       starts with "NC").  For N=1, the valid values are "NWC" (default) and
-      "NCW".  For N=2, the valid values are "NHWC" (default) and "NCHW".  For
-      N=3, the valid value is "NDHWC".
+      "NCW".  For N=2, the valid values are "NHWC" (default) and "NCHW".
+      For N=3, the valid values are "NDHWC" (default) and "NCDHW".
 
   Returns:
     A `Tensor` with the same type as `input` of shape
@@ -678,6 +682,7 @@ def pool(input,  # pylint: disable=redefined-builtin
       0 <= x[i] < output_spatial_shape[i],
       0 <= c < num_channels:
 
+  ```
     output[b, x[0], ..., x[N-1], c] =
       REDUCE_{z[0], ..., z[N-1]}
         input[b,
@@ -685,6 +690,7 @@ def pool(input,  # pylint: disable=redefined-builtin
               ...
               x[N-1]*strides[N-1] - pad_before[N-1] + dilation_rate[N-1]*z[N-1],
               c],
+  ```
 
   where the reduction function REDUCE depends on the value of `pooling_type`,
   and pad_before is defined based on the value of `padding` as described in the
@@ -694,10 +700,12 @@ def pool(input,  # pylint: disable=redefined-builtin
   In the case that `data_format` starts with `"NC"`, the `input` and output are
   simply transposed as follows:
 
+  ```
     pool(input, data_format, **kwargs) =
       tf.transpose(pool(tf.transpose(input, [0] + range(2,N+2) + [1]),
                         **kwargs),
                    [0, N+1] + range(1, N+1))
+  ```
 
   Args:
     input: Tensor of rank N+2, of shape
@@ -720,8 +728,8 @@ def pool(input,  # pylint: disable=redefined-builtin
       the `input` and output is the last dimension (default, or if `data_format`
       does not start with "NC"), or the second dimension (if `data_format`
       starts with "NC").  For N=1, the valid values are "NWC" (default) and
-      "NCW".  For N=2, the valid values are "NHWC" (default) and "NCHW".  For
-      N=3, the valid value is "NDHWC".
+      "NCW".  For N=2, the valid values are "NHWC" (default) and "NCHW".
+      For N=3, the valid values are "NDHWC" (default) and "NCDHW".
 
   Returns:
     Tensor of rank N+2, of shape
@@ -736,6 +744,7 @@ def pool(input,  # pylint: disable=redefined-builtin
 
     If padding = "SAME":
       output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides[i])
+
     If padding = "VALID":
       output_spatial_shape[i] =
         ceil((input_spatial_shape[i] - (window_shape[i] - 1) * dilation_rate[i])
@@ -789,11 +798,7 @@ def pool(input,  # pylint: disable=redefined-builtin
       adjusted_strides = [1, 1] + list(strides)
       spatial_dims = range(2, num_spatial_dims + 2)
 
-    if num_spatial_dims == 3:
-      if data_format is not None and data_format != "NDHWC":
-        raise ValueError("data_format must be \"NDHWC\".")
-      data_format_kwargs = dict()
-    elif num_spatial_dims == 1:
+    if num_spatial_dims == 1:
       if data_format is None or data_format == "NWC":
         data_format_kwargs = dict(data_format="NHWC")
       elif data_format == "NCW":
@@ -844,9 +849,14 @@ def atrous_conv2d(value, filters, rate, padding, name=None):
 
   More specifically:
 
-      output[b, i, j, k] = sum_{di, dj, q} filters[di, dj, q, k] *
-            value[b, i + rate * di, j + rate * dj, q]
-
+  ```
+  output[batch, height, width, out_channel] =
+      sum_{dheight, dwidth, in_channel} (
+          filters[dheight, dwidth, in_channel, out_channel] * 
+          value[batch, height + rate * dheight, width + rate * dwidth, in_channel]
+      )
+  ```
+  
   Atrous convolution allows us to explicitly control how densely to compute
   feature responses in fully convolutional networks. Used in conjunction with
   bilinear interpolation, it offers an alternative to `conv2d_transpose` in
@@ -932,6 +942,14 @@ def atrous_conv2d(value, filters, rate, padding, name=None):
 
   Returns:
     A `Tensor` with the same type as `value`.
+    Output shape with `'VALID`` padding is:
+
+        [batch, height - 2 * (filter_width - 1), 
+         width - 2 * (filter_height - 1), out_channels].
+    
+    Output shape with `'SAME'` padding is:
+
+        [batch, height, width, out_channels].
 
   Raises:
     ValueError: If input/output depth does not match `filters`' shape, or if
@@ -1250,6 +1268,7 @@ def conv3d_transpose(value,
                      output_shape,
                      strides,
                      padding="SAME",
+                     data_format=None,
                      name=None):
   """The transpose of `conv3d`.
 
@@ -1270,6 +1289,8 @@ def conv3d_transpose(value,
       dimension of the input tensor.
     padding: A string, either `'VALID'` or `'SAME'`. The padding algorithm.
       See the @{tf.nn.convolution$comment here}
+    data_format: A string, either `'NDHWC'` or `'NCDHW`' specifying the layout
+      of the input and output tensors. Defaults to `'NDHWC'`.
     name: Optional name for the returned tensor.
 
   Returns:
@@ -1309,6 +1330,7 @@ def conv3d_transpose(value,
                                                out_backprop=value,
                                                strides=strides,
                                                padding=padding,
+                                               data_format=data_format,
                                                name=name)
 
 
@@ -1676,7 +1698,7 @@ def sparse_softmax_cross_entropy_with_logits(_sentinel=None,  # pylint: disable=
   a probability distribution for each entry, see
   `softmax_cross_entropy_with_logits`.
 
-  **WARNING:** This op expects unscaled logits, since it performs a softmax
+  **WARNING:** This op expects unscaled logits, since it performs a `softmax`
   on `logits` internally for efficiency.  Do not call this op with the
   output of `softmax`, as it will produce incorrect results.
 
@@ -2018,7 +2040,7 @@ def conv1d(value, filters, stride, padding,
     [1, filter_width, in_channels, out_channels].
   The result is then reshaped back to
     [batch, out_width, out_channels]
-  (where out_width is a function of the stride and padding as in conv2d) and
+  \(where out_width is a function of the stride and padding as in conv2d\) and
   returned to the caller.
 
   Args:

@@ -958,8 +958,7 @@ class BidirectionalGridLSTMCell(GridLSTMCell):
         num_units, use_peepholes, share_time_frequency_weights, cell_clip,
         initializer, num_unit_shards, forget_bias, feature_size, frequency_skip,
         num_frequency_blocks, start_freqindex_list, end_freqindex_list,
-        couple_input_forget_gates=False,
-        state_is_tuple=True, reuse=reuse)
+        couple_input_forget_gates, True, reuse)
     self._backward_slice_offset = int(backward_slice_offset)
     state_names = ""
     for direction in ["fwd", "bwd"]:
@@ -1459,6 +1458,10 @@ class CompiledWrapper(core_rnn_cell.RNNCell):
   @property
   def output_size(self):
     return self._cell.output_size
+
+  def zero_state(self, batch_size, dtype):
+    with ops.name_scope(type(self).__name__ + "ZeroState", values=[batch_size]):
+      return self._cell.zero_state(batch_size, dtype)
 
   def __call__(self, inputs, state, scope=None):
     if self._compile_stateful:
