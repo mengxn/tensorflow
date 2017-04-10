@@ -1091,17 +1091,16 @@ class BaseSession(SessionInterface):
         tensors_to_delete = self._dead_handles
         self._dead_handles = []
     # Delete the dead tensors.
-    # TODO(yuanbyu): For now we use a sequence of runs to minimize the graph
-    # size and the overhead of graph construction/partitioning.
     if tensors_to_delete:
-      for tensor_handle in tensors_to_delete:
-        feeds = {}
-        fetches = []
+      feeds = {}
+      fetches = []
+      for deleter_key, tensor_handle in enumerate(tensors_to_delete):
         holder, deleter = session_ops._get_handle_deleter(self.graph,
+                                                          deleter_key,
                                                           tensor_handle)
         feeds[holder] = tensor_handle
         fetches.append(deleter)
-        self.run(fetches, feed_dict=feeds)
+      self.run(fetches, feed_dict=feeds)
 
   def _update_with_movers(self, feed_dict, feed_map):
     # If a tensor handle that is fed to a device incompatible placeholder,

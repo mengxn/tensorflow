@@ -195,10 +195,14 @@ filegroup(
         "//tensorflow/compiler/xla/tools:all_files",
         "//tensorflow/contrib:all_files",
         "//tensorflow/contrib/android:all_files",
+        "//tensorflow/contrib/batching:all_files",
+        "//tensorflow/contrib/batching/test_util:all_files",
+        "//tensorflow/contrib/batching/util:all_files",
         "//tensorflow/contrib/bayesflow:all_files",
         "//tensorflow/contrib/boosted_trees:all_files",
         "//tensorflow/contrib/boosted_trees/lib:all_files",
         "//tensorflow/contrib/boosted_trees/proto:all_files",
+        "//tensorflow/contrib/boosted_trees/resources:all_files",
         "//tensorflow/contrib/cloud:all_files",
         "//tensorflow/contrib/cloud/kernels:all_files",
         "//tensorflow/contrib/compiler:all_files",
@@ -220,6 +224,7 @@ filegroup(
         "//tensorflow/contrib/input_pipeline/kernels:all_files",
         "//tensorflow/contrib/integrate:all_files",
         "//tensorflow/contrib/keras:all_files",
+        "//tensorflow/contrib/kernel_methods:all_files",
         "//tensorflow/contrib/labeled_tensor:all_files",
         "//tensorflow/contrib/layers:all_files",
         "//tensorflow/contrib/layers/kernels:all_files",
@@ -252,6 +257,7 @@ filegroup(
         "//tensorflow/contrib/tfprof/python/tools/tfprof:all_files",
         "//tensorflow/contrib/training:all_files",
         "//tensorflow/contrib/util:all_files",
+        "//tensorflow/contrib/xla_tf_graph:all_files",
         "//tensorflow/core:all_files",
         "//tensorflow/core/debug:all_files",
         "//tensorflow/core/distributed_runtime:all_files",
@@ -293,6 +299,7 @@ filegroup(
         "//tensorflow/tensorboard/backend:all_files",
         "//tensorflow/tensorboard/backend/event_processing:all_files",
         "//tensorflow/tensorboard/components:all_files",
+        "//tensorflow/tensorboard/components/tf_text_dashboard:all_files",
         "//tensorflow/tensorboard/components/vz_data_summary:all_files",
         "//tensorflow/tensorboard/components/vz_line_chart:all_files",
         "//tensorflow/tensorboard/components/vz_line_chart/demo:all_files",
@@ -344,9 +351,24 @@ filegroup(
 # -------------------------------------------
 cc_binary(
     name = "libtensorflow.so",
+    linkopts = select({
+        "//tensorflow:darwin": [
+            "-Wl,-exported_symbols_list",  # This line must be directly followed by the exported_symbols.lds file
+            "//tensorflow/c:exported_symbols.lds",
+        ],
+        "//tensorflow:windows": [],
+        "//conditions:default": [
+            "-z defs",
+            "-s",
+            "-Wl,--version-script",  #  This line must be directly followed by the version_script.lds file
+            "//tensorflow/c:version_script.lds",
+        ],
+    }),
     linkshared = 1,
     deps = [
         "//tensorflow/c:c_api",
+        "//tensorflow/c:exported_symbols.lds",
+        "//tensorflow/c:version_script.lds",
         "//tensorflow/core:tensorflow",
     ],
 )

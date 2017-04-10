@@ -594,8 +594,10 @@ cc_test(
     deps = [
         ":buffer_assignment",
         ":computation_tracker",
+        ":copy_insertion",
         ":cpu_plugin",
         ":hlo",
+        ":hlo_ordering",
         "//tensorflow/compiler/xla:literal_util",
         "//tensorflow/compiler/xla:shape_util",
         "//tensorflow/compiler/xla:types",
@@ -1134,13 +1136,31 @@ cc_library(
 )
 
 cc_library(
+    name = "hlo_verifier",
+    srcs = ["hlo_verifier.cc"],
+    hdrs = ["hlo_verifier.h"],
+    deps = [
+        ":hlo",
+        ":hlo_pass",
+        "//tensorflow/compiler/xla:status",
+        "//tensorflow/compiler/xla:status_macros",
+        "//tensorflow/compiler/xla:statusor",
+        "//tensorflow/compiler/xla:types",
+        "//tensorflow/compiler/xla:util",
+        "//tensorflow/core:lib",
+    ],
+)
+
+cc_library(
     name = "hlo_rematerialization",
     srcs = ["hlo_rematerialization.cc"],
     hdrs = ["hlo_rematerialization.h"],
     deps = [
         ":buffer_liveness",
+        ":call_graph",
         ":hlo",
         ":hlo_cost_analysis",
+        ":hlo_dce",
         ":hlo_ordering",
         ":logical_buffer",
         ":tuple_points_to_analysis",

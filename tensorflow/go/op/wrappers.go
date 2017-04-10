@@ -1710,58 +1710,6 @@ func ShapeN(scope *Scope, input []tf.Output, optional ...ShapeNAttr) (output []t
 	return output
 }
 
-// UniqueAttr is an optional argument to Unique.
-type UniqueAttr func(optionalAttr)
-
-// UniqueOutIdx sets the optional out_idx attribute to value.
-// If not specified, defaults to DT_INT32
-func UniqueOutIdx(value tf.DataType) UniqueAttr {
-	return func(m optionalAttr) {
-		m["out_idx"] = value
-	}
-}
-
-// Finds unique elements in a 1-D tensor.
-//
-// This operation returns a tensor `y` containing all of the unique elements of `x`
-// sorted in the same order that they occur in `x`. This operation also returns a
-// tensor `idx` the same size as `x` that contains the index of each value of `x`
-// in the unique output `y`. In other words:
-//
-// `y[idx[i]] = x[i] for i in [0, 1,...,rank(x) - 1]`
-//
-// For example:
-//
-// ```prettyprint
-// # tensor 'x' is [1, 1, 2, 4, 4, 4, 7, 8, 8]
-// y, idx = unique(x)
-// y ==> [1, 2, 4, 7, 8]
-// idx ==> [0, 0, 1, 2, 2, 2, 3, 4, 4]
-// ```
-//
-// Arguments:
-//	x: 1-D.
-//
-// Returns 1-D.1-D.
-func Unique(scope *Scope, x tf.Output, optional ...UniqueAttr) (y tf.Output, idx tf.Output) {
-	if scope.Err() != nil {
-		return
-	}
-	attrs := map[string]interface{}{}
-	for _, a := range optional {
-		a(attrs)
-	}
-	opspec := tf.OpSpec{
-		Type: "Unique",
-		Input: []tf.Input{
-			x,
-		},
-		Attrs: attrs,
-	}
-	op := scope.AddOperation(opspec)
-	return op.Output(0), op.Output(1)
-}
-
 // Reshapes a tensor.
 //
 // Given `tensor`, this operation returns a tensor that has the same values
@@ -2504,6 +2452,121 @@ func ParallelConcat(scope *Scope, values []tf.Output, shape tf.Shape) (output tf
 	}
 	op := scope.AddOperation(opspec)
 	return op.Output(0)
+}
+
+// UniqueAttr is an optional argument to Unique.
+type UniqueAttr func(optionalAttr)
+
+// UniqueOutIdx sets the optional out_idx attribute to value.
+// If not specified, defaults to DT_INT32
+func UniqueOutIdx(value tf.DataType) UniqueAttr {
+	return func(m optionalAttr) {
+		m["out_idx"] = value
+	}
+}
+
+// Finds unique elements in a 1-D tensor.
+//
+// This operation returns a tensor `y` containing all of the unique elements of `x`
+// sorted in the same order that they occur in `x`. This operation also returns a
+// tensor `idx` the same size as `x` that contains the index of each value of `x`
+// in the unique output `y`. In other words:
+//
+// `y[idx[i]] = x[i] for i in [0, 1,...,rank(x) - 1]`
+//
+// For example:
+//
+// ```prettyprint
+// # tensor 'x' is [1, 1, 2, 4, 4, 4, 7, 8, 8]
+// y, idx = unique(x)
+// y ==> [1, 2, 4, 7, 8]
+// idx ==> [0, 0, 1, 2, 2, 2, 3, 4, 4]
+// ```
+//
+// Arguments:
+//	x: 1-D.
+//
+// Returns 1-D.1-D.
+func Unique(scope *Scope, x tf.Output, optional ...UniqueAttr) (y tf.Output, idx tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{}
+	for _, a := range optional {
+		a(attrs)
+	}
+	opspec := tf.OpSpec{
+		Type: "Unique",
+		Input: []tf.Input{
+			x,
+		},
+		Attrs: attrs,
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0), op.Output(1)
+}
+
+// DecodeWavAttr is an optional argument to DecodeWav.
+type DecodeWavAttr func(optionalAttr)
+
+// DecodeWavDesiredChannels sets the optional desired_channels attribute to value.
+//
+// value: Number of sample channels wanted.
+// If not specified, defaults to -1
+func DecodeWavDesiredChannels(value int64) DecodeWavAttr {
+	return func(m optionalAttr) {
+		m["desired_channels"] = value
+	}
+}
+
+// DecodeWavDesiredSamples sets the optional desired_samples attribute to value.
+//
+// value: Length of audio requested.
+// If not specified, defaults to -1
+func DecodeWavDesiredSamples(value int64) DecodeWavAttr {
+	return func(m optionalAttr) {
+		m["desired_samples"] = value
+	}
+}
+
+// Decode a 16-bit PCM WAV file to a float tensor.
+//
+// The -32768 to 32767 signed 16-bit values will be scaled to -1.0 to 1.0 in float.
+//
+// When desired_channels is set, if the input contains fewer channels than this
+// then the last channel will be duplicated to give the requested number, else if
+// the input has more channels than requested then the additional channels will be
+// ignored.
+//
+// If desired_samples is set, then the audio will be cropped or padded with zeroes
+// to the requested length.
+//
+// The first output contains a Tensor with the content of the audio samples. The
+// lowest dimension will be the number of channels, and the second will be the
+// number of samples. For example, a ten-sample-long stereo WAV file should give an
+// output shape of [10, 2].
+//
+// Arguments:
+//	contents: The WAV-encoded audio, usually from a file.
+//
+// Returns 2-D with shape `[length, channels]`.Scalar holding the sample rate found in the WAV header.
+func DecodeWav(scope *Scope, contents tf.Output, optional ...DecodeWavAttr) (audio tf.Output, sample_rate tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{}
+	for _, a := range optional {
+		a(attrs)
+	}
+	opspec := tf.OpSpec{
+		Type: "DecodeWav",
+		Input: []tf.Input{
+			contents,
+		},
+		Attrs: attrs,
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0), op.Output(1)
 }
 
 // AllCandidateSamplerAttr is an optional argument to AllCandidateSampler.
@@ -4778,6 +4841,59 @@ func DynamicStitch(scope *Scope, indices []tf.Output, data []tf.Output) (merged 
 	return op.Output(0)
 }
 
+// CropAndResizeGradBoxesAttr is an optional argument to CropAndResizeGradBoxes.
+type CropAndResizeGradBoxesAttr func(optionalAttr)
+
+// CropAndResizeGradBoxesMethod sets the optional method attribute to value.
+//
+// value: A string specifying the interpolation method. Only 'bilinear' is
+// supported for now.
+// If not specified, defaults to "bilinear"
+func CropAndResizeGradBoxesMethod(value string) CropAndResizeGradBoxesAttr {
+	return func(m optionalAttr) {
+		m["method"] = value
+	}
+}
+
+// Computes the gradient of the crop_and_resize op wrt the input boxes tensor.
+//
+// Arguments:
+//	grads: A 4-D tensor of shape `[num_boxes, crop_height, crop_width, depth]`.
+//	image: A 4-D tensor of shape `[batch, image_height, image_width, depth]`.
+// Both `image_height` and `image_width` need to be positive.
+//	boxes: A 2-D tensor of shape `[num_boxes, 4]`. The `i`-th row of the tensor
+// specifies the coordinates of a box in the `box_ind[i]` image and is specified
+// in normalized coordinates `[y1, x1, y2, x2]`. A normalized coordinate value of
+// `y` is mapped to the image coordinate at `y * (image_height - 1)`, so as the
+// `[0, 1]` interval of normalized image height is mapped to
+// `[0, image_height - 1] in image height coordinates. We do allow y1 > y2, in
+// which case the sampled crop is an up-down flipped version of the original
+// image. The width dimension is treated similarly. Normalized coordinates
+// outside the `[0, 1]` range are allowed, in which case we use
+// `extrapolation_value` to extrapolate the input image values.
+//	box_ind: A 1-D tensor of shape `[num_boxes]` with int32 values in `[0, batch)`.
+// The value of `box_ind[i]` specifies the image that the `i`-th box refers to.
+//
+// Returns A 2-D tensor of shape `[num_boxes, 4]`.
+func CropAndResizeGradBoxes(scope *Scope, grads tf.Output, image tf.Output, boxes tf.Output, box_ind tf.Output, optional ...CropAndResizeGradBoxesAttr) (output tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{}
+	for _, a := range optional {
+		a(attrs)
+	}
+	opspec := tf.OpSpec{
+		Type: "CropAndResizeGradBoxes",
+		Input: []tf.Input{
+			grads, image, boxes, box_ind,
+		},
+		Attrs: attrs,
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0)
+}
+
 // Computes softmax cross entropy cost and gradients to backpropagate.
 //
 // Unlike `SoftmaxCrossEntropyWithLogits`, this operation does not accept
@@ -4931,10 +5047,10 @@ func BatchMatMulAdjY(value bool) BatchMatMulAttr {
 // means to transpose and conjugate it) before multiplication by setting
 // the `adj_x` or `adj_y` flag to `True`, which are by default `False`.
 //
-// The input tensors `x` and `y` are 3-D or higher with shape `[..., r_x, c_x]`
+// The input tensors `x` and `y` are 2-D or higher with shape `[..., r_x, c_x]`
 // and `[..., r_y, c_y]`.
 //
-// The output tensor is 3-D or higher with shape `[..., r_o, c_o]`, where:
+// The output tensor is 2-D or higher with shape `[..., r_o, c_o]`, where:
 //
 //     r_o = c_x if adj_x else r_x
 //     c_o = r_y if adj_y else c_y
@@ -4944,8 +5060,8 @@ func BatchMatMulAdjY(value bool) BatchMatMulAttr {
 //     output[..., :, :] = matrix(x[..., :, :]) * matrix(y[..., :, :])
 //
 // Arguments:
-//	x: 3-D or higher with shape `[..., r_x, c_x]`.
-//	y: 3-D or higher with shape `[..., r_y, c_y]`.
+//	x: 2-D or higher with shape `[..., r_x, c_x]`.
+//	y: 2-D or higher with shape `[..., r_y, c_y]`.
 //
 // Returns 3-D or higher with shape `[..., r_o, c_o]`
 func BatchMatMul(scope *Scope, x tf.Output, y tf.Output, optional ...BatchMatMulAttr) (output tf.Output) {
@@ -5142,10 +5258,10 @@ func FusedBatchNormGrad(scope *Scope, y_backprop tf.Output, x tf.Output, scale t
 	return op.Output(0), op.Output(1), op.Output(2), op.Output(3), op.Output(4)
 }
 
-// AvgPool3DAttr is an optional argument to AvgPool3D.
-type AvgPool3DAttr func(optionalAttr)
+// MaxPool3DGradGradAttr is an optional argument to MaxPool3DGradGrad.
+type MaxPool3DGradGradAttr func(optionalAttr)
 
-// AvgPool3DDataFormat sets the optional data_format attribute to value.
+// MaxPool3DGradGradDataFormat sets the optional data_format attribute to value.
 //
 // value: The data format of the input and output data. With the
 // default format "NDHWC", the data is stored in the order of:
@@ -5153,24 +5269,26 @@ type AvgPool3DAttr func(optionalAttr)
 // Alternatively, the format could be "NCDHW", the data storage order is:
 //     [batch, in_channels, in_depth, in_height, in_width].
 // If not specified, defaults to "NDHWC"
-func AvgPool3DDataFormat(value string) AvgPool3DAttr {
+func MaxPool3DGradGradDataFormat(value string) MaxPool3DGradGradAttr {
 	return func(m optionalAttr) {
 		m["data_format"] = value
 	}
 }
 
-// Performs 3D average pooling on the input.
+// Computes second-order gradients of the maxpooling function.
 //
 // Arguments:
-//	input: Shape `[batch, depth, rows, cols, channels]` tensor to pool over.
+//	orig_input: The original input tensor.
+//	orig_output: The original output tensor.
+//	grad: Output backprop of shape `[batch, depth, rows, cols, channels]`.
 //	ksize: 1-D tensor of length 5. The size of the window for each dimension of
 // the input tensor. Must have `ksize[0] = ksize[4] = 1`.
 //	strides: 1-D tensor of length 5. The stride of the sliding window for each
 // dimension of `input`. Must have `strides[0] = strides[4] = 1`.
 //	padding: The type of padding algorithm to use.
 //
-// Returns The average pooled output tensor.
-func AvgPool3D(scope *Scope, input tf.Output, ksize []int64, strides []int64, padding string, optional ...AvgPool3DAttr) (output tf.Output) {
+// Returns Gradients of gradients w.r.t. the input to `max_pool`.
+func MaxPool3DGradGrad(scope *Scope, orig_input tf.Output, orig_output tf.Output, grad tf.Output, ksize []int64, strides []int64, padding string, optional ...MaxPool3DGradGradAttr) (output tf.Output) {
 	if scope.Err() != nil {
 		return
 	}
@@ -5179,43 +5297,14 @@ func AvgPool3D(scope *Scope, input tf.Output, ksize []int64, strides []int64, pa
 		a(attrs)
 	}
 	opspec := tf.OpSpec{
-		Type: "AvgPool3D",
+		Type: "MaxPool3DGradGrad",
 		Input: []tf.Input{
-			input,
+			orig_input, orig_output, grad,
 		},
 		Attrs: attrs,
 	}
 	op := scope.AddOperation(opspec)
 	return op.Output(0)
-}
-
-// Produces the max pool of the input tensor for quantized types.
-//
-// Arguments:
-//	input: The 4D (batch x rows x cols x depth) Tensor to MaxReduce over.
-//	min_input: The float value that the lowest quantized input value represents.
-//	max_input: The float value that the highest quantized input value represents.
-//	ksize: The size of the window for each dimension of the input tensor.
-// The length must be 4 to match the number of dimensions of the input.
-//	strides: The stride of the sliding window for each dimension of the input
-// tensor. The length must be 4 to match the number of dimensions of the input.
-//	padding: The type of padding algorithm to use.
-//
-// Returns The float value that the lowest quantized output value represents.The float value that the highest quantized output value represents.
-func QuantizedMaxPool(scope *Scope, input tf.Output, min_input tf.Output, max_input tf.Output, ksize []int64, strides []int64, padding string) (output tf.Output, min_output tf.Output, max_output tf.Output) {
-	if scope.Err() != nil {
-		return
-	}
-	attrs := map[string]interface{}{"ksize": ksize, "strides": strides, "padding": padding}
-	opspec := tf.OpSpec{
-		Type: "QuantizedMaxPool",
-		Input: []tf.Input{
-			input, min_input, max_input,
-		},
-		Attrs: attrs,
-	}
-	op := scope.AddOperation(opspec)
-	return op.Output(0), op.Output(1), op.Output(2)
 }
 
 // FakeQuantWithMinMaxArgsGradientAttr is an optional argument to FakeQuantWithMinMaxArgsGradient.
@@ -5338,6 +5427,82 @@ func Equal(scope *Scope, x tf.Output, y tf.Output) (z tf.Output) {
 	}
 	op := scope.AddOperation(opspec)
 	return op.Output(0)
+}
+
+// AvgPool3DAttr is an optional argument to AvgPool3D.
+type AvgPool3DAttr func(optionalAttr)
+
+// AvgPool3DDataFormat sets the optional data_format attribute to value.
+//
+// value: The data format of the input and output data. With the
+// default format "NDHWC", the data is stored in the order of:
+//     [batch, in_depth, in_height, in_width, in_channels].
+// Alternatively, the format could be "NCDHW", the data storage order is:
+//     [batch, in_channels, in_depth, in_height, in_width].
+// If not specified, defaults to "NDHWC"
+func AvgPool3DDataFormat(value string) AvgPool3DAttr {
+	return func(m optionalAttr) {
+		m["data_format"] = value
+	}
+}
+
+// Performs 3D average pooling on the input.
+//
+// Arguments:
+//	input: Shape `[batch, depth, rows, cols, channels]` tensor to pool over.
+//	ksize: 1-D tensor of length 5. The size of the window for each dimension of
+// the input tensor. Must have `ksize[0] = ksize[4] = 1`.
+//	strides: 1-D tensor of length 5. The stride of the sliding window for each
+// dimension of `input`. Must have `strides[0] = strides[4] = 1`.
+//	padding: The type of padding algorithm to use.
+//
+// Returns The average pooled output tensor.
+func AvgPool3D(scope *Scope, input tf.Output, ksize []int64, strides []int64, padding string, optional ...AvgPool3DAttr) (output tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{"ksize": ksize, "strides": strides, "padding": padding}
+	for _, a := range optional {
+		a(attrs)
+	}
+	opspec := tf.OpSpec{
+		Type: "AvgPool3D",
+		Input: []tf.Input{
+			input,
+		},
+		Attrs: attrs,
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0)
+}
+
+// Produces the max pool of the input tensor for quantized types.
+//
+// Arguments:
+//	input: The 4D (batch x rows x cols x depth) Tensor to MaxReduce over.
+//	min_input: The float value that the lowest quantized input value represents.
+//	max_input: The float value that the highest quantized input value represents.
+//	ksize: The size of the window for each dimension of the input tensor.
+// The length must be 4 to match the number of dimensions of the input.
+//	strides: The stride of the sliding window for each dimension of the input
+// tensor. The length must be 4 to match the number of dimensions of the input.
+//	padding: The type of padding algorithm to use.
+//
+// Returns The float value that the lowest quantized output value represents.The float value that the highest quantized output value represents.
+func QuantizedMaxPool(scope *Scope, input tf.Output, min_input tf.Output, max_input tf.Output, ksize []int64, strides []int64, padding string) (output tf.Output, min_output tf.Output, max_output tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{"ksize": ksize, "strides": strides, "padding": padding}
+	opspec := tf.OpSpec{
+		Type: "QuantizedMaxPool",
+		Input: []tf.Input{
+			input, min_input, max_input,
+		},
+		Attrs: attrs,
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0), op.Output(1), op.Output(2)
 }
 
 // Conv3DBackpropInputV2Attr is an optional argument to Conv3DBackpropInputV2.
@@ -5896,64 +6061,6 @@ func BiasAddV1(scope *Scope, value tf.Output, bias tf.Output) (output tf.Output)
 	return op.Output(0)
 }
 
-// FractionalAvgPoolGradAttr is an optional argument to FractionalAvgPoolGrad.
-type FractionalAvgPoolGradAttr func(optionalAttr)
-
-// FractionalAvgPoolGradOverlapping sets the optional overlapping attribute to value.
-//
-// value: When set to True, it means when pooling, the values at the boundary
-// of adjacent pooling cells are used by both cells. For example:
-//
-// `index  0  1  2  3  4`
-//
-// `value  20 5  16 3  7`
-//
-// If the pooling sequence is [0, 2, 4], then 16, at index 2 will be used twice.
-// The result would be [41/3, 26/3] for fractional avg pooling.
-// If not specified, defaults to false
-func FractionalAvgPoolGradOverlapping(value bool) FractionalAvgPoolGradAttr {
-	return func(m optionalAttr) {
-		m["overlapping"] = value
-	}
-}
-
-// Computes gradient of the FractionalAvgPool function.
-//
-// Unlike FractionalMaxPoolGrad, we don't need to find arg_max for
-// FractionalAvgPoolGrad, we just need to evenly back-propagate each element of
-// out_backprop to those indices that form the same pooling cell. Therefore, we
-// just need to know the shape of original input tensor, instead of the whole
-// tensor.
-//
-// Arguments:
-//	orig_input_tensor_shape: Original input tensor shape for `fractional_avg_pool`
-//	out_backprop: 4-D with shape `[batch, height, width, channels]`.  Gradients
-// w.r.t. the output of `fractional_avg_pool`.
-//	row_pooling_sequence: row pooling sequence, form pooling region with
-// col_pooling_sequence.
-//	col_pooling_sequence: column pooling sequence, form pooling region with
-// row_pooling sequence.
-//
-// Returns 4-D.  Gradients w.r.t. the input of `fractional_avg_pool`.
-func FractionalAvgPoolGrad(scope *Scope, orig_input_tensor_shape tf.Output, out_backprop tf.Output, row_pooling_sequence tf.Output, col_pooling_sequence tf.Output, optional ...FractionalAvgPoolGradAttr) (output tf.Output) {
-	if scope.Err() != nil {
-		return
-	}
-	attrs := map[string]interface{}{}
-	for _, a := range optional {
-		a(attrs)
-	}
-	opspec := tf.OpSpec{
-		Type: "FractionalAvgPoolGrad",
-		Input: []tf.Input{
-			orig_input_tensor_shape, out_backprop, row_pooling_sequence, col_pooling_sequence,
-		},
-		Attrs: attrs,
-	}
-	op := scope.AddOperation(opspec)
-	return op.Output(0)
-}
-
 // Conv2DBackpropInputAttr is an optional argument to Conv2DBackpropInput.
 type Conv2DBackpropInputAttr func(optionalAttr)
 
@@ -6154,104 +6261,6 @@ func Sigmoid(scope *Scope, x tf.Output) (y tf.Output) {
 	}
 	op := scope.AddOperation(opspec)
 	return op.Output(0)
-}
-
-// FractionalMaxPoolGradAttr is an optional argument to FractionalMaxPoolGrad.
-type FractionalMaxPoolGradAttr func(optionalAttr)
-
-// FractionalMaxPoolGradOverlapping sets the optional overlapping attribute to value.
-//
-// value: When set to True, it means when pooling, the values at the boundary
-// of adjacent pooling cells are used by both cells. For example:
-//
-// `index  0  1  2  3  4`
-//
-// `value  20 5  16 3  7`
-//
-// If the pooling sequence is [0, 2, 4], then 16, at index 2 will be used twice.
-// The result would be [20, 16] for fractional max pooling.
-// If not specified, defaults to false
-func FractionalMaxPoolGradOverlapping(value bool) FractionalMaxPoolGradAttr {
-	return func(m optionalAttr) {
-		m["overlapping"] = value
-	}
-}
-
-// Computes gradient of the FractionalMaxPool function.
-//
-// Arguments:
-//	orig_input: Original input for `fractional_max_pool`
-//	orig_output: Original output for `fractional_max_pool`
-//	out_backprop: 4-D with shape `[batch, height, width, channels]`.  Gradients
-// w.r.t. the output of `fractional_max_pool`.
-//	row_pooling_sequence: row pooling sequence, form pooling region with
-// col_pooling_sequence.
-//	col_pooling_sequence: column pooling sequence, form pooling region with
-// row_pooling sequence.
-//
-// Returns 4-D.  Gradients w.r.t. the input of `fractional_max_pool`.
-func FractionalMaxPoolGrad(scope *Scope, orig_input tf.Output, orig_output tf.Output, out_backprop tf.Output, row_pooling_sequence tf.Output, col_pooling_sequence tf.Output, optional ...FractionalMaxPoolGradAttr) (output tf.Output) {
-	if scope.Err() != nil {
-		return
-	}
-	attrs := map[string]interface{}{}
-	for _, a := range optional {
-		a(attrs)
-	}
-	opspec := tf.OpSpec{
-		Type: "FractionalMaxPoolGrad",
-		Input: []tf.Input{
-			orig_input, orig_output, out_backprop, row_pooling_sequence, col_pooling_sequence,
-		},
-		Attrs: attrs,
-	}
-	op := scope.AddOperation(opspec)
-	return op.Output(0)
-}
-
-// ResourceApplyAdagradDAAttr is an optional argument to ResourceApplyAdagradDA.
-type ResourceApplyAdagradDAAttr func(optionalAttr)
-
-// ResourceApplyAdagradDAUseLocking sets the optional use_locking attribute to value.
-//
-// value: If True, updating of the var and accum tensors will be protected by
-// a lock; otherwise the behavior is undefined, but may exhibit less contention.
-// If not specified, defaults to false
-func ResourceApplyAdagradDAUseLocking(value bool) ResourceApplyAdagradDAAttr {
-	return func(m optionalAttr) {
-		m["use_locking"] = value
-	}
-}
-
-// Update '*var' according to the proximal adagrad scheme.
-//
-// Arguments:
-//	var_: Should be from a Variable().
-//	gradient_accumulator: Should be from a Variable().
-//	gradient_squared_accumulator: Should be from a Variable().
-//	grad: The gradient.
-//	lr: Scaling factor. Must be a scalar.
-//	l1: L1 regularization. Must be a scalar.
-//	l2: L2 regularization. Must be a scalar.
-//	global_step: Training step number. Must be a scalar.
-//
-// Returns the created operation.
-func ResourceApplyAdagradDA(scope *Scope, var_ tf.Output, gradient_accumulator tf.Output, gradient_squared_accumulator tf.Output, grad tf.Output, lr tf.Output, l1 tf.Output, l2 tf.Output, global_step tf.Output, optional ...ResourceApplyAdagradDAAttr) (o *tf.Operation) {
-	if scope.Err() != nil {
-		return
-	}
-	attrs := map[string]interface{}{}
-	for _, a := range optional {
-		a(attrs)
-	}
-	opspec := tf.OpSpec{
-		Type: "ResourceApplyAdagradDA",
-		Input: []tf.Input{
-			var_, gradient_accumulator, gradient_squared_accumulator, grad, lr, l1, l2, global_step,
-		},
-		Attrs: attrs,
-	}
-	return scope.AddOperation(opspec)
 }
 
 // ComputeAccidentalHitsAttr is an optional argument to ComputeAccidentalHits.
@@ -8606,6 +8615,35 @@ func MergeSummary(scope *Scope, inputs []tf.Output) (summary tf.Output) {
 	return op.Output(0)
 }
 
+// Encode audio data using the WAV file format.
+//
+// This operation will generate a string suitable to be saved out to create a .wav
+// audio file. It will be encoded in the 16-bit PCM format. It takes in float
+// values in the range -1.0f to 1.0f, and any outside that value will be clamped to
+// that range.
+//
+// `audio` is a 2-D float Tensor of shape `[length, channels]`.
+// `sample_rate` is a scalar Tensor holding the rate to use (e.g. 44100).
+//
+// Arguments:
+//	audio: 2-D with shape `[length, channels]`.
+//	sample_rate: Scalar containing the sample frequency.
+//
+// Returns 0-D. WAV-encoded file contents.
+func EncodeWav(scope *Scope, audio tf.Output, sample_rate tf.Output) (contents tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	opspec := tf.OpSpec{
+		Type: "EncodeWav",
+		Input: []tf.Input{
+			audio, sample_rate,
+		},
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0)
+}
+
 // The gradient operator for the SparseAdd op.
 //
 // The SparseAdd op calculates A + B, where A, B, and the sum are all represented
@@ -8983,15 +9021,16 @@ func Rint(scope *Scope, x tf.Output) (y tf.Output) {
 	return op.Output(0)
 }
 
-// Compute the 1-dimensional discrete Fourier Transform over the inner-most
+// Fast Fourier transform.
 //
+// Computes the 1-dimensional discrete Fourier transform over the inner-most
 // dimension of `input`.
 //
 // Arguments:
 //	input: A complex64 tensor.
 //
 // Returns A complex64 tensor of the same shape as `input`. The inner-most
-//   dimension of `input` is replaced with its 1D Fourier Transform.
+//   dimension of `input` is replaced with its 1D Fourier transform.
 //
 // @compatibility(numpy)
 // Equivalent to np.fft.fft
@@ -9209,6 +9248,64 @@ func FractionalMaxPool(scope *Scope, value tf.Output, pooling_ratio []float32, o
 	}
 	op := scope.AddOperation(opspec)
 	return op.Output(0), op.Output(1), op.Output(2)
+}
+
+// FractionalAvgPoolGradAttr is an optional argument to FractionalAvgPoolGrad.
+type FractionalAvgPoolGradAttr func(optionalAttr)
+
+// FractionalAvgPoolGradOverlapping sets the optional overlapping attribute to value.
+//
+// value: When set to True, it means when pooling, the values at the boundary
+// of adjacent pooling cells are used by both cells. For example:
+//
+// `index  0  1  2  3  4`
+//
+// `value  20 5  16 3  7`
+//
+// If the pooling sequence is [0, 2, 4], then 16, at index 2 will be used twice.
+// The result would be [41/3, 26/3] for fractional avg pooling.
+// If not specified, defaults to false
+func FractionalAvgPoolGradOverlapping(value bool) FractionalAvgPoolGradAttr {
+	return func(m optionalAttr) {
+		m["overlapping"] = value
+	}
+}
+
+// Computes gradient of the FractionalAvgPool function.
+//
+// Unlike FractionalMaxPoolGrad, we don't need to find arg_max for
+// FractionalAvgPoolGrad, we just need to evenly back-propagate each element of
+// out_backprop to those indices that form the same pooling cell. Therefore, we
+// just need to know the shape of original input tensor, instead of the whole
+// tensor.
+//
+// Arguments:
+//	orig_input_tensor_shape: Original input tensor shape for `fractional_avg_pool`
+//	out_backprop: 4-D with shape `[batch, height, width, channels]`.  Gradients
+// w.r.t. the output of `fractional_avg_pool`.
+//	row_pooling_sequence: row pooling sequence, form pooling region with
+// col_pooling_sequence.
+//	col_pooling_sequence: column pooling sequence, form pooling region with
+// row_pooling sequence.
+//
+// Returns 4-D.  Gradients w.r.t. the input of `fractional_avg_pool`.
+func FractionalAvgPoolGrad(scope *Scope, orig_input_tensor_shape tf.Output, out_backprop tf.Output, row_pooling_sequence tf.Output, col_pooling_sequence tf.Output, optional ...FractionalAvgPoolGradAttr) (output tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{}
+	for _, a := range optional {
+		a(attrs)
+	}
+	opspec := tf.OpSpec{
+		Type: "FractionalAvgPoolGrad",
+		Input: []tf.Input{
+			orig_input_tensor_shape, out_backprop, row_pooling_sequence, col_pooling_sequence,
+		},
+		Attrs: attrs,
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0)
 }
 
 // Reorders a SparseTensor into the canonical, row-major ordering.
@@ -9622,15 +9719,16 @@ func ResourceApplyCenteredRMSProp(scope *Scope, var_ tf.Output, mg tf.Output, ms
 	return scope.AddOperation(opspec)
 }
 
-// Compute the inverse 3-dimensional discrete Fourier Transform over the inner-most
+// Inverse 3D fast Fourier transform.
 //
-// 3 dimensions of `input`.
+// Computes the inverse 3-dimensional discrete Fourier transform over the
+// inner-most 3 dimensions of `input`.
 //
 // Arguments:
 //	input: A complex64 tensor.
 //
 // Returns A complex64 tensor of the same shape as `input`. The inner-most 3
-//   dimensions of `input` are replaced with their inverse 3D Fourier Transform.
+//   dimensions of `input` are replaced with their inverse 3D Fourier transform.
 //
 // @compatibility(numpy)
 // Equivalent to np.fft.ifftn with 3 dimensions.
@@ -9673,6 +9771,35 @@ func RequantizationRange(scope *Scope, input tf.Output, input_min tf.Output, inp
 	}
 	op := scope.AddOperation(opspec)
 	return op.Output(0), op.Output(1)
+}
+
+// Computes second-order gradients of the maxpooling function.
+//
+// Arguments:
+//	input: The original input.
+//	grad: 4-D with shape `[batch, height, width, channels]`.  Gradients w.r.t. the
+// input of `max_pool`.
+//	argmax: The indices of the maximum values chosen for each output of `max_pool`.
+//	ksize: The size of the window for each dimension of the input tensor.
+//	strides: The stride of the sliding window for each dimension of the
+// input tensor.
+//	padding: The type of padding algorithm to use.
+//
+// Returns Gradients of gradients w.r.t. the input of `max_pool`.
+func MaxPoolGradGradWithArgmax(scope *Scope, input tf.Output, grad tf.Output, argmax tf.Output, ksize []int64, strides []int64, padding string) (output tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{"ksize": ksize, "strides": strides, "padding": padding}
+	opspec := tf.OpSpec{
+		Type: "MaxPoolGradGradWithArgmax",
+		Input: []tf.Input{
+			input, grad, argmax,
+		},
+		Attrs: attrs,
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0)
 }
 
 // DepthwiseConv2dNativeBackpropInputAttr is an optional argument to DepthwiseConv2dNativeBackpropInput.
@@ -9899,15 +10026,16 @@ func ResourceApplyAdam(scope *Scope, var_ tf.Output, m tf.Output, v tf.Output, b
 	return scope.AddOperation(opspec)
 }
 
-// Compute the 3-dimensional discrete Fourier Transform over the inner-most 3
+// 3D fast Fourier transform.
 //
+// Computes the 3-dimensional discrete Fourier transform over the inner-most 3
 // dimensions of `input`.
 //
 // Arguments:
 //	input: A complex64 tensor.
 //
 // Returns A complex64 tensor of the same shape as `input`. The inner-most 3
-//   dimensions of `input` are replaced with their 3D Fourier Transform.
+//   dimensions of `input` are replaced with their 3D Fourier transform.
 //
 // @compatibility(numpy)
 // Equivalent to np.fft.fftn with 3 dimensions.
@@ -10092,15 +10220,16 @@ func ResourceApplyProximalGradientDescent(scope *Scope, var_ tf.Output, alpha tf
 	return scope.AddOperation(opspec)
 }
 
-// Compute the 2-dimensional discrete Fourier Transform over the inner-most
+// 2D fast Fourier transform.
 //
+// Computes the 2-dimensional discrete Fourier transform over the inner-most
 // 2 dimensions of `input`.
 //
 // Arguments:
 //	input: A complex64 tensor.
 //
 // Returns A complex64 tensor of the same shape as `input`. The inner-most 2
-//   dimensions of `input` are replaced with their 2D Fourier Transform.
+//   dimensions of `input` are replaced with their 2D Fourier transform.
 //
 // @compatibility(numpy)
 // Equivalent to np.fft.fft2
@@ -10152,15 +10281,16 @@ func Fill(scope *Scope, dims tf.Output, value tf.Output) (output tf.Output) {
 	return op.Output(0)
 }
 
-// Compute the inverse 2-dimensional discrete Fourier Transform over the inner-most
+// Inverse 2D fast Fourier transform.
 //
-// 2 dimensions of `input`.
+// Computes the inverse 2-dimensional discrete Fourier transform over the
+// inner-most 2 dimensions of `input`.
 //
 // Arguments:
 //	input: A complex64 tensor.
 //
 // Returns A complex64 tensor of the same shape as `input`. The inner-most 2
-//   dimensions of `input` are replaced with their inverse 2D Fourier Transform.
+//   dimensions of `input` are replaced with their inverse 2D Fourier transform.
 //
 // @compatibility(numpy)
 // Equivalent to np.fft.ifft2
@@ -10440,6 +10570,104 @@ func ResourceSparseApplyAdagradDA(scope *Scope, var_ tf.Output, gradient_accumul
 		Attrs: attrs,
 	}
 	return scope.AddOperation(opspec)
+}
+
+// ResourceApplyAdagradDAAttr is an optional argument to ResourceApplyAdagradDA.
+type ResourceApplyAdagradDAAttr func(optionalAttr)
+
+// ResourceApplyAdagradDAUseLocking sets the optional use_locking attribute to value.
+//
+// value: If True, updating of the var and accum tensors will be protected by
+// a lock; otherwise the behavior is undefined, but may exhibit less contention.
+// If not specified, defaults to false
+func ResourceApplyAdagradDAUseLocking(value bool) ResourceApplyAdagradDAAttr {
+	return func(m optionalAttr) {
+		m["use_locking"] = value
+	}
+}
+
+// Update '*var' according to the proximal adagrad scheme.
+//
+// Arguments:
+//	var_: Should be from a Variable().
+//	gradient_accumulator: Should be from a Variable().
+//	gradient_squared_accumulator: Should be from a Variable().
+//	grad: The gradient.
+//	lr: Scaling factor. Must be a scalar.
+//	l1: L1 regularization. Must be a scalar.
+//	l2: L2 regularization. Must be a scalar.
+//	global_step: Training step number. Must be a scalar.
+//
+// Returns the created operation.
+func ResourceApplyAdagradDA(scope *Scope, var_ tf.Output, gradient_accumulator tf.Output, gradient_squared_accumulator tf.Output, grad tf.Output, lr tf.Output, l1 tf.Output, l2 tf.Output, global_step tf.Output, optional ...ResourceApplyAdagradDAAttr) (o *tf.Operation) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{}
+	for _, a := range optional {
+		a(attrs)
+	}
+	opspec := tf.OpSpec{
+		Type: "ResourceApplyAdagradDA",
+		Input: []tf.Input{
+			var_, gradient_accumulator, gradient_squared_accumulator, grad, lr, l1, l2, global_step,
+		},
+		Attrs: attrs,
+	}
+	return scope.AddOperation(opspec)
+}
+
+// FractionalMaxPoolGradAttr is an optional argument to FractionalMaxPoolGrad.
+type FractionalMaxPoolGradAttr func(optionalAttr)
+
+// FractionalMaxPoolGradOverlapping sets the optional overlapping attribute to value.
+//
+// value: When set to True, it means when pooling, the values at the boundary
+// of adjacent pooling cells are used by both cells. For example:
+//
+// `index  0  1  2  3  4`
+//
+// `value  20 5  16 3  7`
+//
+// If the pooling sequence is [0, 2, 4], then 16, at index 2 will be used twice.
+// The result would be [20, 16] for fractional max pooling.
+// If not specified, defaults to false
+func FractionalMaxPoolGradOverlapping(value bool) FractionalMaxPoolGradAttr {
+	return func(m optionalAttr) {
+		m["overlapping"] = value
+	}
+}
+
+// Computes gradient of the FractionalMaxPool function.
+//
+// Arguments:
+//	orig_input: Original input for `fractional_max_pool`
+//	orig_output: Original output for `fractional_max_pool`
+//	out_backprop: 4-D with shape `[batch, height, width, channels]`.  Gradients
+// w.r.t. the output of `fractional_max_pool`.
+//	row_pooling_sequence: row pooling sequence, form pooling region with
+// col_pooling_sequence.
+//	col_pooling_sequence: column pooling sequence, form pooling region with
+// row_pooling sequence.
+//
+// Returns 4-D.  Gradients w.r.t. the input of `fractional_max_pool`.
+func FractionalMaxPoolGrad(scope *Scope, orig_input tf.Output, orig_output tf.Output, out_backprop tf.Output, row_pooling_sequence tf.Output, col_pooling_sequence tf.Output, optional ...FractionalMaxPoolGradAttr) (output tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{}
+	for _, a := range optional {
+		a(attrs)
+	}
+	opspec := tf.OpSpec{
+		Type: "FractionalMaxPoolGrad",
+		Input: []tf.Input{
+			orig_input, orig_output, out_backprop, row_pooling_sequence, col_pooling_sequence,
+		},
+		Attrs: attrs,
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0)
 }
 
 // AvgPool3DGradAttr is an optional argument to AvgPool3DGrad.
@@ -11164,8 +11392,9 @@ func Cross(scope *Scope, a tf.Output, b tf.Output) (product tf.Output) {
 	return op.Output(0)
 }
 
-// Compute the inverse 2-dimensional discrete Fourier Transform of a real-valued
+// Inverse 2D real-valued fast Fourier transform.
 //
+// Computes the inverse 2-dimensional discrete Fourier transform of a real-valued
 // signal over the inner-most 2 dimensions of `input`.
 //
 // The inner-most 2 dimensions of `input` are assumed to be the result of `RFFT2D`:
@@ -11181,7 +11410,7 @@ func Cross(scope *Scope, a tf.Output, b tf.Output) (product tf.Output) {
 //
 // Returns A float32 tensor of the same rank as `input`. The inner-most 2
 //   dimensions of `input` are replaced with the `fft_length` samples of their
-//   inverse 2D Fourier Transform.
+//   inverse 2D Fourier transform.
 //
 // @compatibility(numpy)
 // Equivalent to np.fft.irfft2
@@ -12062,6 +12291,118 @@ func SparseDenseCwiseMul(scope *Scope, sp_indices tf.Output, sp_values tf.Output
 	return op.Output(0)
 }
 
+// NonMaxSuppressionAttr is an optional argument to NonMaxSuppression.
+type NonMaxSuppressionAttr func(optionalAttr)
+
+// NonMaxSuppressionIouThreshold sets the optional iou_threshold attribute to value.
+//
+// value: A float representing the threshold for deciding whether boxes
+// overlap too much with respect to IOU.
+// If not specified, defaults to 0.5
+func NonMaxSuppressionIouThreshold(value float32) NonMaxSuppressionAttr {
+	return func(m optionalAttr) {
+		m["iou_threshold"] = value
+	}
+}
+
+// Greedily selects a subset of bounding boxes in descending order of score,
+//
+// pruning away boxes that have high intersection-over-union (IOU) overlap
+// with previously selected boxes.  Bounding boxes are supplied as
+// [y1, x1, y2, x2], where (y1, x1) and (y2, x2) are the coordinates of any
+// diagonal pair of box corners and the coordinates can be provided as normalized
+// (i.e., lying in the interval [0, 1]) or absolute.  Note that this algorithm
+// is agnostic to where the origin is in the coordinate system.  Note that this
+// algorithm is invariant to orthogonal transformations and translations
+// of the coordinate system; thus translating or reflections of the coordinate
+// system result in the same boxes being selected by the algorithm.
+//
+// The output of this operation is a set of integers indexing into the input
+// collection of bounding boxes representing the selected boxes.  The bounding
+// box coordinates corresponding to the selected indices can then be obtained
+// using the `tf.gather operation`.  For example:
+//
+//   selected_indices = tf.image.non_max_suppression(
+//       boxes, scores, max_output_size, iou_threshold)
+//   selected_boxes = tf.gather(boxes, selected_indices)
+//
+// Arguments:
+//	boxes: A 2-D float tensor of shape `[num_boxes, 4]`.
+//	scores: A 1-D float tensor of shape `[num_boxes]` representing a single
+// score corresponding to each box (each row of boxes).
+//	max_output_size: A scalar integer tensor representing the maximum number of
+// boxes to be selected by non max suppression.
+//
+// Returns A 1-D integer tensor of shape `[M]` representing the selected
+// indices from the boxes tensor, where `M <= max_output_size`.
+func NonMaxSuppression(scope *Scope, boxes tf.Output, scores tf.Output, max_output_size tf.Output, optional ...NonMaxSuppressionAttr) (selected_indices tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{}
+	for _, a := range optional {
+		a(attrs)
+	}
+	opspec := tf.OpSpec{
+		Type: "NonMaxSuppression",
+		Input: []tf.Input{
+			boxes, scores, max_output_size,
+		},
+		Attrs: attrs,
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0)
+}
+
+// ResourceApplyAdadeltaAttr is an optional argument to ResourceApplyAdadelta.
+type ResourceApplyAdadeltaAttr func(optionalAttr)
+
+// ResourceApplyAdadeltaUseLocking sets the optional use_locking attribute to value.
+//
+// value: If True, updating of the var, accum and update_accum tensors will be protected by
+// a lock; otherwise the behavior is undefined, but may exhibit less contention.
+// If not specified, defaults to false
+func ResourceApplyAdadeltaUseLocking(value bool) ResourceApplyAdadeltaAttr {
+	return func(m optionalAttr) {
+		m["use_locking"] = value
+	}
+}
+
+// Update '*var' according to the adadelta scheme.
+//
+// accum = rho() * accum + (1 - rho()) * grad.square();
+// update = (update_accum + epsilon).sqrt() * (accum + epsilon()).rsqrt() * grad;
+// update_accum = rho() * update_accum + (1 - rho()) * update.square();
+// var -= update;
+//
+// Arguments:
+//	var_: Should be from a Variable().
+//	accum: Should be from a Variable().
+//	accum_update: Should be from a Variable().
+//	lr: Scaling factor. Must be a scalar.
+//	rho: Decay factor. Must be a scalar.
+//	epsilon: Constant factor. Must be a scalar.
+//	grad: The gradient.
+//
+// Returns the created operation.
+func ResourceApplyAdadelta(scope *Scope, var_ tf.Output, accum tf.Output, accum_update tf.Output, lr tf.Output, rho tf.Output, epsilon tf.Output, grad tf.Output, optional ...ResourceApplyAdadeltaAttr) (o *tf.Operation) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{}
+	for _, a := range optional {
+		a(attrs)
+	}
+	opspec := tf.OpSpec{
+		Type: "ResourceApplyAdadelta",
+		Input: []tf.Input{
+			var_, accum, accum_update, lr, rho, epsilon, grad,
+		},
+		Attrs: attrs,
+	}
+	return scope.AddOperation(opspec)
+}
+
 // Shuffle dimensions of x according to a permutation.
 //
 // The output `y` has the same rank as `x`. The shapes of `x` and `y` satisfy:
@@ -12763,6 +13104,11 @@ func GatherValidateIndices(value bool) GatherAttr {
 // If `indices` is a permutation and `len(indices) == params.shape[0]` then
 // this operation will permute `params` accordingly.
 //
+// `validate_indices`: DEPRECATED. If this operation is assigned to CPU, values in
+// `indices` are always validated to be within range. If assigned to GPU,
+// out-of-bound indices result in unspecified behavior (currently the result is
+// `0`, but this may become an error in the future).
+//
 // <div style="width:70%; margin:auto; margin-bottom:10px; margin-top:20px;">
 // <img style="width:100%" src="../../images/Gather.png" alt>
 // </div>
@@ -13330,118 +13676,6 @@ func RandomPoisson(scope *Scope, shape tf.Output, rate tf.Output, optional ...Ra
 		Type: "RandomPoisson",
 		Input: []tf.Input{
 			shape, rate,
-		},
-		Attrs: attrs,
-	}
-	op := scope.AddOperation(opspec)
-	return op.Output(0)
-}
-
-// ResourceApplyAdadeltaAttr is an optional argument to ResourceApplyAdadelta.
-type ResourceApplyAdadeltaAttr func(optionalAttr)
-
-// ResourceApplyAdadeltaUseLocking sets the optional use_locking attribute to value.
-//
-// value: If True, updating of the var, accum and update_accum tensors will be protected by
-// a lock; otherwise the behavior is undefined, but may exhibit less contention.
-// If not specified, defaults to false
-func ResourceApplyAdadeltaUseLocking(value bool) ResourceApplyAdadeltaAttr {
-	return func(m optionalAttr) {
-		m["use_locking"] = value
-	}
-}
-
-// Update '*var' according to the adadelta scheme.
-//
-// accum = rho() * accum + (1 - rho()) * grad.square();
-// update = (update_accum + epsilon).sqrt() * (accum + epsilon()).rsqrt() * grad;
-// update_accum = rho() * update_accum + (1 - rho()) * update.square();
-// var -= update;
-//
-// Arguments:
-//	var_: Should be from a Variable().
-//	accum: Should be from a Variable().
-//	accum_update: Should be from a Variable().
-//	lr: Scaling factor. Must be a scalar.
-//	rho: Decay factor. Must be a scalar.
-//	epsilon: Constant factor. Must be a scalar.
-//	grad: The gradient.
-//
-// Returns the created operation.
-func ResourceApplyAdadelta(scope *Scope, var_ tf.Output, accum tf.Output, accum_update tf.Output, lr tf.Output, rho tf.Output, epsilon tf.Output, grad tf.Output, optional ...ResourceApplyAdadeltaAttr) (o *tf.Operation) {
-	if scope.Err() != nil {
-		return
-	}
-	attrs := map[string]interface{}{}
-	for _, a := range optional {
-		a(attrs)
-	}
-	opspec := tf.OpSpec{
-		Type: "ResourceApplyAdadelta",
-		Input: []tf.Input{
-			var_, accum, accum_update, lr, rho, epsilon, grad,
-		},
-		Attrs: attrs,
-	}
-	return scope.AddOperation(opspec)
-}
-
-// NonMaxSuppressionAttr is an optional argument to NonMaxSuppression.
-type NonMaxSuppressionAttr func(optionalAttr)
-
-// NonMaxSuppressionIouThreshold sets the optional iou_threshold attribute to value.
-//
-// value: A float representing the threshold for deciding whether boxes
-// overlap too much with respect to IOU.
-// If not specified, defaults to 0.5
-func NonMaxSuppressionIouThreshold(value float32) NonMaxSuppressionAttr {
-	return func(m optionalAttr) {
-		m["iou_threshold"] = value
-	}
-}
-
-// Greedily selects a subset of bounding boxes in descending order of score,
-//
-// pruning away boxes that have high intersection-over-union (IOU) overlap
-// with previously selected boxes.  Bounding boxes are supplied as
-// [y1, x1, y2, x2], where (y1, x1) and (y2, x2) are the coordinates of any
-// diagonal pair of box corners and the coordinates can be provided as normalized
-// (i.e., lying in the interval [0, 1]) or absolute.  Note that this algorithm
-// is agnostic to where the origin is in the coordinate system.  Note that this
-// algorithm is invariant to orthogonal transformations and translations
-// of the coordinate system; thus translating or reflections of the coordinate
-// system result in the same boxes being selected by the algorithm.
-//
-// The output of this operation is a set of integers indexing into the input
-// collection of bounding boxes representing the selected boxes.  The bounding
-// box coordinates corresponding to the selected indices can then be obtained
-// using the `tf.gather operation`.  For example:
-//
-//   selected_indices = tf.image.non_max_suppression(
-//       boxes, scores, max_output_size, iou_threshold)
-//   selected_boxes = tf.gather(boxes, selected_indices)
-//
-// Arguments:
-//	boxes: A 2-D float tensor of shape `[num_boxes, 4]`.
-//	scores: A 1-D float tensor of shape `[num_boxes]` representing a single
-// score corresponding to each box (each row of boxes).
-//	max_output_size: A scalar integer tensor representing the maximum number of
-// boxes to be selected by non max suppression.
-//
-// Returns A 1-D integer tensor of shape `[M]` representing the selected
-// indices from the boxes tensor, where `M <= max_output_size`.
-func NonMaxSuppression(scope *Scope, boxes tf.Output, scores tf.Output, max_output_size tf.Output, optional ...NonMaxSuppressionAttr) (selected_indices tf.Output) {
-	if scope.Err() != nil {
-		return
-	}
-	attrs := map[string]interface{}{}
-	for _, a := range optional {
-		a(attrs)
-	}
-	opspec := tf.OpSpec{
-		Type: "NonMaxSuppression",
-		Input: []tf.Input{
-			boxes, scores, max_output_size,
 		},
 		Attrs: attrs,
 	}
@@ -14081,15 +14315,16 @@ func Zeta(scope *Scope, x tf.Output, q tf.Output) (z tf.Output) {
 	return op.Output(0)
 }
 
-// Compute the inverse 1-dimensional discrete Fourier Transform over the inner-most
+// Inverse fast Fourier transform.
 //
-// dimension of `input`.
+// Computes the inverse 1-dimensional discrete Fourier transform over the
+// inner-most dimension of `input`.
 //
 // Arguments:
 //	input: A complex64 tensor.
 //
 // Returns A complex64 tensor of the same shape as `input`. The inner-most
-//   dimension of `input` is replaced with its inverse 1D Fourier Transform.
+//   dimension of `input` is replaced with its inverse 1D Fourier transform.
 //
 // @compatibility(numpy)
 // Equivalent to np.fft.ifft
@@ -14108,8 +14343,9 @@ func IFFT(scope *Scope, input tf.Output) (output tf.Output) {
 	return op.Output(0)
 }
 
-// Compute the inverse 1-dimensional discrete Fourier Transform of a real-valued
+// Inverse real-valued fast Fourier transform.
 //
+// Computes the inverse 1-dimensional discrete Fourier transform of a real-valued
 // signal over the inner-most dimension of `input`.
 //
 // The inner-most dimension of `input` is assumed to be the result of `RFFT`: the
@@ -14125,7 +14361,7 @@ func IFFT(scope *Scope, input tf.Output) (output tf.Output) {
 //
 // Returns A float32 tensor of the same rank as `input`. The inner-most
 //   dimension of `input` is replaced with the `fft_length` samples of its inverse
-//   1D Fourier Transform.
+//   1D Fourier transform.
 //
 // @compatibility(numpy)
 // Equivalent to np.fft.irfft
@@ -14269,8 +14505,9 @@ func AssignAddVariableOp(scope *Scope, resource tf.Output, value tf.Output) (o *
 	return scope.AddOperation(opspec)
 }
 
-// Compute the 1-dimensional discrete Fourier Transform of a real-valued signal
+// Real-valued fast Fourier transform.
 //
+// Computes the 1-dimensional discrete Fourier transform of a real-valued signal
 // over the inner-most dimension of `input`.
 //
 // Since the DFT of a real signal is Hermitian-symmetric, `RFFT` only returns the
@@ -14283,7 +14520,7 @@ func AssignAddVariableOp(scope *Scope, resource tf.Output, value tf.Output) (o *
 //
 // Returns A complex64 tensor of the same rank as `input`. The inner-most
 //   dimension of `input` is replaced with the `fft_length / 2 + 1` unique
-//   frequency components of its 1D Fourier Transform.
+//   frequency components of its 1D Fourier transform.
 //
 // @compatibility(numpy)
 // Equivalent to np.fft.rfft
@@ -14859,8 +15096,9 @@ func StringSplit(scope *Scope, input tf.Output, delimiter tf.Output) (indices tf
 	return op.Output(0), op.Output(1), op.Output(2)
 }
 
-// Compute the inverse 3-dimensional discrete Fourier Transform of a real-valued
+// Inverse 3D real-valued fast Fourier transform.
 //
+// Computes the inverse 3-dimensional discrete Fourier transform of a real-valued
 // signal over the inner-most 3 dimensions of `input`.
 //
 // The inner-most 3 dimensions of `input` are assumed to be the result of `RFFT3D`:
@@ -14876,7 +15114,7 @@ func StringSplit(scope *Scope, input tf.Output, delimiter tf.Output) (indices tf
 //
 // Returns A float32 tensor of the same rank as `input`. The inner-most 3
 //   dimensions of `input` are replaced with the `fft_length` samples of their
-//   inverse 3D real Fourier Transform.
+//   inverse 3D real Fourier transform.
 //
 // @compatibility(numpy)
 // Equivalent to np.irfftn with 3 dimensions.
@@ -14908,170 +15146,6 @@ func NotEqual(scope *Scope, x tf.Output, y tf.Output) (z tf.Output) {
 		Input: []tf.Input{
 			x, y,
 		},
-	}
-	op := scope.AddOperation(opspec)
-	return op.Output(0)
-}
-
-// FractionalAvgPoolAttr is an optional argument to FractionalAvgPool.
-type FractionalAvgPoolAttr func(optionalAttr)
-
-// FractionalAvgPoolPseudoRandom sets the optional pseudo_random attribute to value.
-//
-// value: When set to True, generates the pooling sequence in a
-// pseudorandom fashion, otherwise, in a random fashion. Check paper [Benjamin
-// Graham, Fractional Max-Pooling](http://arxiv.org/abs/1412.6071) for
-// difference between pseudorandom and random.
-// If not specified, defaults to false
-func FractionalAvgPoolPseudoRandom(value bool) FractionalAvgPoolAttr {
-	return func(m optionalAttr) {
-		m["pseudo_random"] = value
-	}
-}
-
-// FractionalAvgPoolOverlapping sets the optional overlapping attribute to value.
-//
-// value: When set to True, it means when pooling, the values at the boundary
-// of adjacent pooling cells are used by both cells. For example:
-//
-// `index  0  1  2  3  4`
-//
-// `value  20 5  16 3  7`
-//
-// If the pooling sequence is [0, 2, 4], then 16, at index 2 will be used twice.
-// The result would be [41/3, 26/3] for fractional avg pooling.
-// If not specified, defaults to false
-func FractionalAvgPoolOverlapping(value bool) FractionalAvgPoolAttr {
-	return func(m optionalAttr) {
-		m["overlapping"] = value
-	}
-}
-
-// FractionalAvgPoolDeterministic sets the optional deterministic attribute to value.
-//
-// value: When set to True, a fixed pooling region will be used when
-// iterating over a FractionalAvgPool node in the computation graph. Mainly used
-// in unit test to make FractionalAvgPool deterministic.
-// If not specified, defaults to false
-func FractionalAvgPoolDeterministic(value bool) FractionalAvgPoolAttr {
-	return func(m optionalAttr) {
-		m["deterministic"] = value
-	}
-}
-
-// FractionalAvgPoolSeed sets the optional seed attribute to value.
-//
-// value: If either seed or seed2 are set to be non-zero, the random number
-// generator is seeded by the given seed.  Otherwise, it is seeded by a
-// random seed.
-// If not specified, defaults to 0
-func FractionalAvgPoolSeed(value int64) FractionalAvgPoolAttr {
-	return func(m optionalAttr) {
-		m["seed"] = value
-	}
-}
-
-// FractionalAvgPoolSeed2 sets the optional seed2 attribute to value.
-//
-// value: An second seed to avoid seed collision.
-// If not specified, defaults to 0
-func FractionalAvgPoolSeed2(value int64) FractionalAvgPoolAttr {
-	return func(m optionalAttr) {
-		m["seed2"] = value
-	}
-}
-
-// Performs fractional average pooling on the input.
-//
-// Fractional average pooling is similar to Fractional max pooling in the pooling
-// region generation step. The only difference is that after pooling regions are
-// generated, a mean operation is performed instead of a max operation in each
-// pooling region.
-//
-// Arguments:
-//	value: 4-D with shape `[batch, height, width, channels]`.
-//	pooling_ratio: Pooling ratio for each dimension of `value`, currently only
-// supports row and col dimension and should be >= 1.0. For example, a valid
-// pooling ratio looks like [1.0, 1.44, 1.73, 1.0]. The first and last elements
-// must be 1.0 because we don't allow pooling on batch and channels
-// dimensions. 1.44 and 1.73 are pooling ratio on height and width dimensions
-// respectively.
-//
-// Returns output tensor after fractional avg pooling.row pooling sequence, needed to calculate gradient.column pooling sequence, needed to calculate gradient.
-func FractionalAvgPool(scope *Scope, value tf.Output, pooling_ratio []float32, optional ...FractionalAvgPoolAttr) (output tf.Output, row_pooling_sequence tf.Output, col_pooling_sequence tf.Output) {
-	if scope.Err() != nil {
-		return
-	}
-	attrs := map[string]interface{}{"pooling_ratio": pooling_ratio}
-	for _, a := range optional {
-		a(attrs)
-	}
-	opspec := tf.OpSpec{
-		Type: "FractionalAvgPool",
-		Input: []tf.Input{
-			value,
-		},
-		Attrs: attrs,
-	}
-	op := scope.AddOperation(opspec)
-	return op.Output(0), op.Output(1), op.Output(2)
-}
-
-// RandomCropAttr is an optional argument to RandomCrop.
-type RandomCropAttr func(optionalAttr)
-
-// RandomCropSeed sets the optional seed attribute to value.
-//
-// value: If either seed or seed2 are set to be non-zero, the random number
-// generator is seeded by the given seed.  Otherwise, it is seeded by a
-// random seed.
-// If not specified, defaults to 0
-func RandomCropSeed(value int64) RandomCropAttr {
-	return func(m optionalAttr) {
-		m["seed"] = value
-	}
-}
-
-// RandomCropSeed2 sets the optional seed2 attribute to value.
-//
-// value: An second seed to avoid seed collision.
-// If not specified, defaults to 0
-func RandomCropSeed2(value int64) RandomCropAttr {
-	return func(m optionalAttr) {
-		m["seed2"] = value
-	}
-}
-
-// Randomly crop `image`.
-//
-// DEPRECATED at GraphDef version 8: Random crop is now pure Python
-//
-// `size` is a 1-D int64 tensor with 2 elements representing the crop height and
-// width.  The values must be non negative.
-//
-// This Op picks a random location in `image` and crops a `height` by `width`
-// rectangle from that location.  The random location is picked so the cropped
-// area will fit inside the original image.
-//
-// Arguments:
-//	image: 3-D of shape `[height, width, channels]`.
-//	size: 1-D of length 2 containing: `crop_height`, `crop_width`..
-//
-// Returns 3-D of shape `[crop_height, crop_width, channels].`
-func RandomCrop(scope *Scope, image tf.Output, size tf.Output, optional ...RandomCropAttr) (output tf.Output) {
-	if scope.Err() != nil {
-		return
-	}
-	attrs := map[string]interface{}{}
-	for _, a := range optional {
-		a(attrs)
-	}
-	opspec := tf.OpSpec{
-		Type: "RandomCrop",
-		Input: []tf.Input{
-			image, size,
-		},
-		Attrs: attrs,
 	}
 	op := scope.AddOperation(opspec)
 	return op.Output(0)
@@ -15389,6 +15463,170 @@ func IdentityReaderV2(scope *Scope, optional ...IdentityReaderV2Attr) (reader_ha
 	}
 	op := scope.AddOperation(opspec)
 	return op.Output(0)
+}
+
+// RandomCropAttr is an optional argument to RandomCrop.
+type RandomCropAttr func(optionalAttr)
+
+// RandomCropSeed sets the optional seed attribute to value.
+//
+// value: If either seed or seed2 are set to be non-zero, the random number
+// generator is seeded by the given seed.  Otherwise, it is seeded by a
+// random seed.
+// If not specified, defaults to 0
+func RandomCropSeed(value int64) RandomCropAttr {
+	return func(m optionalAttr) {
+		m["seed"] = value
+	}
+}
+
+// RandomCropSeed2 sets the optional seed2 attribute to value.
+//
+// value: An second seed to avoid seed collision.
+// If not specified, defaults to 0
+func RandomCropSeed2(value int64) RandomCropAttr {
+	return func(m optionalAttr) {
+		m["seed2"] = value
+	}
+}
+
+// Randomly crop `image`.
+//
+// DEPRECATED at GraphDef version 8: Random crop is now pure Python
+//
+// `size` is a 1-D int64 tensor with 2 elements representing the crop height and
+// width.  The values must be non negative.
+//
+// This Op picks a random location in `image` and crops a `height` by `width`
+// rectangle from that location.  The random location is picked so the cropped
+// area will fit inside the original image.
+//
+// Arguments:
+//	image: 3-D of shape `[height, width, channels]`.
+//	size: 1-D of length 2 containing: `crop_height`, `crop_width`..
+//
+// Returns 3-D of shape `[crop_height, crop_width, channels].`
+func RandomCrop(scope *Scope, image tf.Output, size tf.Output, optional ...RandomCropAttr) (output tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{}
+	for _, a := range optional {
+		a(attrs)
+	}
+	opspec := tf.OpSpec{
+		Type: "RandomCrop",
+		Input: []tf.Input{
+			image, size,
+		},
+		Attrs: attrs,
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0)
+}
+
+// FractionalAvgPoolAttr is an optional argument to FractionalAvgPool.
+type FractionalAvgPoolAttr func(optionalAttr)
+
+// FractionalAvgPoolPseudoRandom sets the optional pseudo_random attribute to value.
+//
+// value: When set to True, generates the pooling sequence in a
+// pseudorandom fashion, otherwise, in a random fashion. Check paper [Benjamin
+// Graham, Fractional Max-Pooling](http://arxiv.org/abs/1412.6071) for
+// difference between pseudorandom and random.
+// If not specified, defaults to false
+func FractionalAvgPoolPseudoRandom(value bool) FractionalAvgPoolAttr {
+	return func(m optionalAttr) {
+		m["pseudo_random"] = value
+	}
+}
+
+// FractionalAvgPoolOverlapping sets the optional overlapping attribute to value.
+//
+// value: When set to True, it means when pooling, the values at the boundary
+// of adjacent pooling cells are used by both cells. For example:
+//
+// `index  0  1  2  3  4`
+//
+// `value  20 5  16 3  7`
+//
+// If the pooling sequence is [0, 2, 4], then 16, at index 2 will be used twice.
+// The result would be [41/3, 26/3] for fractional avg pooling.
+// If not specified, defaults to false
+func FractionalAvgPoolOverlapping(value bool) FractionalAvgPoolAttr {
+	return func(m optionalAttr) {
+		m["overlapping"] = value
+	}
+}
+
+// FractionalAvgPoolDeterministic sets the optional deterministic attribute to value.
+//
+// value: When set to True, a fixed pooling region will be used when
+// iterating over a FractionalAvgPool node in the computation graph. Mainly used
+// in unit test to make FractionalAvgPool deterministic.
+// If not specified, defaults to false
+func FractionalAvgPoolDeterministic(value bool) FractionalAvgPoolAttr {
+	return func(m optionalAttr) {
+		m["deterministic"] = value
+	}
+}
+
+// FractionalAvgPoolSeed sets the optional seed attribute to value.
+//
+// value: If either seed or seed2 are set to be non-zero, the random number
+// generator is seeded by the given seed.  Otherwise, it is seeded by a
+// random seed.
+// If not specified, defaults to 0
+func FractionalAvgPoolSeed(value int64) FractionalAvgPoolAttr {
+	return func(m optionalAttr) {
+		m["seed"] = value
+	}
+}
+
+// FractionalAvgPoolSeed2 sets the optional seed2 attribute to value.
+//
+// value: An second seed to avoid seed collision.
+// If not specified, defaults to 0
+func FractionalAvgPoolSeed2(value int64) FractionalAvgPoolAttr {
+	return func(m optionalAttr) {
+		m["seed2"] = value
+	}
+}
+
+// Performs fractional average pooling on the input.
+//
+// Fractional average pooling is similar to Fractional max pooling in the pooling
+// region generation step. The only difference is that after pooling regions are
+// generated, a mean operation is performed instead of a max operation in each
+// pooling region.
+//
+// Arguments:
+//	value: 4-D with shape `[batch, height, width, channels]`.
+//	pooling_ratio: Pooling ratio for each dimension of `value`, currently only
+// supports row and col dimension and should be >= 1.0. For example, a valid
+// pooling ratio looks like [1.0, 1.44, 1.73, 1.0]. The first and last elements
+// must be 1.0 because we don't allow pooling on batch and channels
+// dimensions. 1.44 and 1.73 are pooling ratio on height and width dimensions
+// respectively.
+//
+// Returns output tensor after fractional avg pooling.row pooling sequence, needed to calculate gradient.column pooling sequence, needed to calculate gradient.
+func FractionalAvgPool(scope *Scope, value tf.Output, pooling_ratio []float32, optional ...FractionalAvgPoolAttr) (output tf.Output, row_pooling_sequence tf.Output, col_pooling_sequence tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{"pooling_ratio": pooling_ratio}
+	for _, a := range optional {
+		a(attrs)
+	}
+	opspec := tf.OpSpec{
+		Type: "FractionalAvgPool",
+		Input: []tf.Input{
+			value,
+		},
+		Attrs: attrs,
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0), op.Output(1), op.Output(2)
 }
 
 // Produces the average pool of the input tensor for quantized types.
@@ -16328,8 +16566,9 @@ func Erfc(scope *Scope, x tf.Output) (y tf.Output) {
 	return op.Output(0)
 }
 
-// Compute the 2-dimensional discrete Fourier Transform of a real-valued signal
+// 2D real-valued fast Fourier transform.
 //
+// Computes the 2-dimensional discrete Fourier transform of a real-valued signal
 // over the inner-most 2 dimensions of `input`.
 //
 // Since the DFT of a real signal is Hermitian-symmetric, `RFFT2D` only returns the
@@ -16342,7 +16581,7 @@ func Erfc(scope *Scope, x tf.Output) (y tf.Output) {
 //	fft_length: An int32 tensor of shape [2]. The FFT length for each dimension.
 //
 // Returns A complex64 tensor of the same rank as `input`. The inner-most 2
-//   dimensions of `input` are replaced with their 2D Fourier Transform. The
+//   dimensions of `input` are replaced with their 2D Fourier transform. The
 //   inner-most dimension contains `fft_length / 2 + 1` unique frequency
 //   components.
 //
@@ -18049,59 +18288,6 @@ func Bincount(scope *Scope, arr tf.Output, size tf.Output, weights tf.Output) (b
 		Input: []tf.Input{
 			arr, size, weights,
 		},
-	}
-	op := scope.AddOperation(opspec)
-	return op.Output(0)
-}
-
-// CropAndResizeGradBoxesAttr is an optional argument to CropAndResizeGradBoxes.
-type CropAndResizeGradBoxesAttr func(optionalAttr)
-
-// CropAndResizeGradBoxesMethod sets the optional method attribute to value.
-//
-// value: A string specifying the interpolation method. Only 'bilinear' is
-// supported for now.
-// If not specified, defaults to "bilinear"
-func CropAndResizeGradBoxesMethod(value string) CropAndResizeGradBoxesAttr {
-	return func(m optionalAttr) {
-		m["method"] = value
-	}
-}
-
-// Computes the gradient of the crop_and_resize op wrt the input boxes tensor.
-//
-// Arguments:
-//	grads: A 4-D tensor of shape `[num_boxes, crop_height, crop_width, depth]`.
-//	image: A 4-D tensor of shape `[batch, image_height, image_width, depth]`.
-// Both `image_height` and `image_width` need to be positive.
-//	boxes: A 2-D tensor of shape `[num_boxes, 4]`. The `i`-th row of the tensor
-// specifies the coordinates of a box in the `box_ind[i]` image and is specified
-// in normalized coordinates `[y1, x1, y2, x2]`. A normalized coordinate value of
-// `y` is mapped to the image coordinate at `y * (image_height - 1)`, so as the
-// `[0, 1]` interval of normalized image height is mapped to
-// `[0, image_height - 1] in image height coordinates. We do allow y1 > y2, in
-// which case the sampled crop is an up-down flipped version of the original
-// image. The width dimension is treated similarly. Normalized coordinates
-// outside the `[0, 1]` range are allowed, in which case we use
-// `extrapolation_value` to extrapolate the input image values.
-//	box_ind: A 1-D tensor of shape `[num_boxes]` with int32 values in `[0, batch)`.
-// The value of `box_ind[i]` specifies the image that the `i`-th box refers to.
-//
-// Returns A 2-D tensor of shape `[num_boxes, 4]`.
-func CropAndResizeGradBoxes(scope *Scope, grads tf.Output, image tf.Output, boxes tf.Output, box_ind tf.Output, optional ...CropAndResizeGradBoxesAttr) (output tf.Output) {
-	if scope.Err() != nil {
-		return
-	}
-	attrs := map[string]interface{}{}
-	for _, a := range optional {
-		a(attrs)
-	}
-	opspec := tf.OpSpec{
-		Type: "CropAndResizeGradBoxes",
-		Input: []tf.Input{
-			grads, image, boxes, box_ind,
-		},
-		Attrs: attrs,
 	}
 	op := scope.AddOperation(opspec)
 	return op.Output(0)
@@ -19972,8 +20158,57 @@ func TensorArrayGatherV3(scope *Scope, handle tf.Output, indices tf.Output, flow
 	return op.Output(0)
 }
 
-// Compute the 3-dimensional discrete Fourier Transform of a real-valued signal
+// MaxPoolGradGradAttr is an optional argument to MaxPoolGradGrad.
+type MaxPoolGradGradAttr func(optionalAttr)
+
+// MaxPoolGradGradDataFormat sets the optional data_format attribute to value.
 //
+// value: Specify the data format of the input and output data. With the
+// default format "NHWC", the data is stored in the order of:
+//     [batch, in_height, in_width, in_channels].
+// Alternatively, the format could be "NCHW", the data storage order of:
+//     [batch, in_channels, in_height, in_width].
+// If not specified, defaults to "NHWC"
+func MaxPoolGradGradDataFormat(value string) MaxPoolGradGradAttr {
+	return func(m optionalAttr) {
+		m["data_format"] = value
+	}
+}
+
+// Computes second-order gradients of the maxpooling function.
+//
+// Arguments:
+//	orig_input: The original input tensor.
+//	orig_output: The original output tensor.
+//	grad: 4-D.  Gradients of gradients w.r.t. the input of `max_pool`.
+//	ksize: The size of the window for each dimension of the input tensor.
+//	strides: The stride of the sliding window for each dimension of the
+// input tensor.
+//	padding: The type of padding algorithm to use.
+//
+// Returns Gradients of gradients w.r.t. the input to `max_pool`.
+func MaxPoolGradGrad(scope *Scope, orig_input tf.Output, orig_output tf.Output, grad tf.Output, ksize []int64, strides []int64, padding string, optional ...MaxPoolGradGradAttr) (output tf.Output) {
+	if scope.Err() != nil {
+		return
+	}
+	attrs := map[string]interface{}{"ksize": ksize, "strides": strides, "padding": padding}
+	for _, a := range optional {
+		a(attrs)
+	}
+	opspec := tf.OpSpec{
+		Type: "MaxPoolGradGrad",
+		Input: []tf.Input{
+			orig_input, orig_output, grad,
+		},
+		Attrs: attrs,
+	}
+	op := scope.AddOperation(opspec)
+	return op.Output(0)
+}
+
+// 3D real-valued fast Fourier transform.
+//
+// Computes the 3-dimensional discrete Fourier transform of a real-valued signal
 // over the inner-most 3 dimensions of `input`.
 //
 // Since the DFT of a real signal is Hermitian-symmetric, `RFFT3D` only returns the
@@ -19986,7 +20221,7 @@ func TensorArrayGatherV3(scope *Scope, handle tf.Output, indices tf.Output, flow
 //	fft_length: An int32 tensor of shape [3]. The FFT length for each dimension.
 //
 // Returns A complex64 tensor of the same rank as `input`. The inner-most 3
-//   dimensions of `input` are replaced with the their 3D Fourier Transform. The
+//   dimensions of `input` are replaced with the their 3D Fourier transform. The
 //   inner-most dimension contains `fft_length / 2 + 1` unique frequency
 //   components.
 //

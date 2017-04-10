@@ -37,6 +37,9 @@ if(tensorflow_BUILD_CONTRIB_KERNELS)
       "${tensorflow_source_dir}/tensorflow/contrib/layers/kernels/sparse_feature_cross_kernel.cc"
       "${tensorflow_source_dir}/tensorflow/contrib/layers/ops/bucketization_op.cc"
       "${tensorflow_source_dir}/tensorflow/contrib/layers/ops/sparse_feature_cross_op.cc"
+      "${tensorflow_source_dir}/tensorflow/contrib/nccl/kernels/nccl_manager.cc"
+      "${tensorflow_source_dir}/tensorflow/contrib/nccl/kernels/nccl_ops.cc"
+      "${tensorflow_source_dir}/tensorflow/contrib/nccl/ops/nccl_ops.cc"
       "${tensorflow_source_dir}/tensorflow/contrib/rnn/kernels/blas_gemm.cc"
       "${tensorflow_source_dir}/tensorflow/contrib/rnn/kernels/gru_ops.cc"
       "${tensorflow_source_dir}/tensorflow/contrib/rnn/kernels/lstm_ops.cc"
@@ -99,6 +102,10 @@ if(WIN32)
       "${tensorflow_source_dir}/tensorflow/contrib/rnn/kernels/lstm_ops.cc"
       "${tensorflow_source_dir}/tensorflow/contrib/rnn/ops/gru_ops.cc"
       "${tensorflow_source_dir}/tensorflow/contrib/rnn/ops/lstm_ops.cc"
+      # temporarily disable nccl (nccl itself needs to be ported to windows first)
+      "${tensorflow_source_dir}/tensorflow/contrib/nccl/kernels/nccl_manager.cc"
+      "${tensorflow_source_dir}/tensorflow/contrib/nccl/kernels/nccl_ops.cc"
+      "${tensorflow_source_dir}/tensorflow/contrib/nccl/ops/nccl_ops.cc"
   )
   list(REMOVE_ITEM tf_core_kernels_srcs ${tf_core_kernels_windows_exclude_srcs})
 endif(WIN32)

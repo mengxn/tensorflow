@@ -210,6 +210,11 @@ class UnaryOpsTest(XLATestCase):
               dtype=dtype))
 
       self._assertOpOutputMatchesExpected(
+          nn_ops.elu,
+          np.array([[-1, 0, 1]], dtype=dtype),
+          expected=np.array([[-0.63212056, 0, 1]], dtype=dtype))
+
+      self._assertOpOutputMatchesExpected(
           nn_ops.relu,
           np.array([[-1, 1]], dtype=dtype),
           expected=np.array([[0, 1]], dtype=dtype))
@@ -256,6 +261,11 @@ class UnaryOpsTest(XLATestCase):
           array_ops.zeros_like,
           np.array([[4, 3], [2, 1]], dtype=dtype),
           expected=np.array([[0, 0], [0, 0]], dtype=dtype))
+
+      self._assertOpOutputMatchesExpected(
+          array_ops.ones_like,
+          np.array([[4, 3], [2, 1]], dtype=dtype),
+          expected=np.array([[1, 1], [1, 1]], dtype=dtype))
 
   def testLogicalOps(self):
     self._assertOpOutputMatchesExpected(

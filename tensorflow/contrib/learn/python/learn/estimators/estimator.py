@@ -362,6 +362,11 @@ class BaseEstimator(
       self._config = config
     logging.info('Using config: %s', str(vars(self._config)))
 
+    if self._config.session_config is None:
+      self._session_config = config_pb2.ConfigProto(allow_soft_placement=True)
+    else:
+      self._session_config = self._config.session_config
+
     # Model directory.
     if (model_dir is not None) and (self._config.model_dir is not None):
       if model_dir != self._config.model_dir:
@@ -378,6 +383,8 @@ class BaseEstimator(
       self._model_dir = tempfile.mkdtemp()
       logging.warning('Using temporary folder as model directory: %s',
                       self._model_dir)
+    if self._config.model_dir is None:
+      self._config = self._config.replace(model_dir=self._model_dir)
 
     # Set device function depending if there are replicas or not.
     self._device_fn = _get_replica_device_setter(self._config)
@@ -827,7 +834,7 @@ class BaseEstimator(
           eval_ops=update_op,
           final_ops=eval_dict,
           hooks=hooks,
-          config=config_pb2.ConfigProto(allow_soft_placement=True))
+          config=self._session_config)
       current_global_step = eval_results[global_step_key]
 
       _write_dict_to_summary(eval_dir, eval_results, current_global_step)
@@ -862,7 +869,7 @@ class BaseEstimator(
           session_creator=monitored_session.ChiefSessionCreator(
               checkpoint_filename_with_path=checkpoint_path,
               scaffold=infer_ops.scaffold,
-              config=config_pb2.ConfigProto(allow_soft_placement=True)))
+              config=self._session_config))
       if not as_iterable:
         with mon_sess:
           if not mon_sess.should_stop():
@@ -974,7 +981,7 @@ class BaseEstimator(
           chief_only_hooks=chief_hooks + model_fn_ops.training_chief_hooks,
           save_checkpoint_secs=0,  # Saving is handled by a hook.
           save_summaries_steps=self._config.save_summary_steps,
-          config=config_pb2.ConfigProto(allow_soft_placement=True)
+          config=self._session_config
       ) as mon_sess:
         loss = None
         while not mon_sess.should_stop():
